@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Écosystème numérique ADUG : qui passe par où</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --fond:#f3f8f6; --surface:#ffffff; --bande:#e8f3ee; --encre:#14332c; --doux:#4a675f;
+  --ligne:#c6ded4; --vert:#13926e; --vert-fonce:#0d6b50; --mint:#d9f2ea; --ocean:#1f7a8c;
+  --jaune:#ffc000; --jaune-doux:#fff4cf; --jaune-encre:#6b5000;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --fond:#0d1a17; --surface:#142823; --bande:#112420; --encre:#e2f0eb; --doux:#9dbab1;
+    --ligne:#2b4942; --vert:#33b88f; --vert-fonce:#7fd8b9; --mint:#1b3831; --ocean:#56aebf;
+    --jaune:#ffc000; --jaune-doux:#3a2f0c; --jaune-encre:#ffd966; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --fond:#0d1a17; --surface:#142823; --bande:#112420; --encre:#e2f0eb; --doux:#9dbab1;
+  --ligne:#2b4942; --vert:#33b88f; --vert-fonce:#7fd8b9; --mint:#1b3831; --ocean:#56aebf;
+  --jaune:#ffc000; --jaune-doux:#3a2f0c; --jaune-encre:#ffd966; color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{
+  margin:0; background:var(--fond); color:var(--encre);
+  font-family:Inter,"Segoe UI",system-ui,-apple-system,Roboto,sans-serif;
+  font-size:16px; line-height:1.55;
+}
+.page{max-width:1280px; margin:0 auto; padding:32px 24px 48px}
+header{max-width:760px; margin-bottom:28px}
+h1{font-size:clamp(1.7rem,3.2vw,2.5rem); line-height:1.12; letter-spacing:-0.02em; margin:0 0 12px; font-weight:800}
+.lead{margin:0; color:var(--doux); font-size:1.05rem; max-width:66ch}
+
+.layout{display:grid; grid-template-columns:250px minmax(0,1fr); gap:28px; align-items:start}
+
+nav.profils{position:sticky; top:calc(16px + env(safe-area-inset-top,0px))}
+.groupe{margin-bottom:20px}
+.groupe h2{font-size:.85rem; font-weight:600; color:var(--doux); margin:0 0 8px}
+.choix{display:flex; flex-direction:column; gap:6px}
+.choix button{
+  font:inherit; font-size:.95rem; text-align:left; cursor:pointer;
+  background:var(--surface); color:var(--encre);
+  border:1.5px solid var(--ligne); border-radius:10px; padding:9px 12px;
+}
+.choix button:hover{border-color:var(--vert)}
+.choix button[aria-pressed="true"]{background:var(--vert); border-color:var(--vert); color:#fff; font-weight:600}
+:root[data-theme="dark"] .choix button[aria-pressed="true"]{color:#06201a}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .choix button[aria-pressed="true"]{color:#06201a}}
+button:focus-visible,.node:focus-visible{outline:3px solid var(--jaune); outline-offset:2px}
+
+.legende{display:flex; flex-wrap:wrap; gap:8px 20px; font-size:.85rem; color:var(--doux); margin:0 0 12px; padding:0; list-style:none}
+.legende li{display:flex; align-items:center; gap:8px}
+.sw{display:inline-block; width:18px; height:12px; border-radius:3px; border:1.5px solid}
+.sw.plat{background:var(--surface); border-color:var(--vert)}
+.sw.socle{background:var(--mint); border-color:var(--vert); border-radius:8px}
+.sw.cloison{background:var(--jaune-doux); border-color:var(--jaune)}
+.sw.svc{background:var(--surface); border-color:var(--ocean)}
+.trait{display:inline-block; width:26px; height:0; border-top:2.5px solid var(--vert)}
+.trait.data{border-top:2.5px dashed var(--ocean)}
+
+.schema-wrap{
+  background:var(--surface); border:1.5px solid var(--ligne); border-radius:14px;
+  overflow-x:auto; -webkit-overflow-scrolling:touch;
+}
+svg{display:block; width:100%; min-width:820px; height:auto}
+.bande{fill:var(--bande)}
+.rang{font-size:13px; font-weight:600; fill:var(--doux)}
+.node{cursor:pointer; transition:opacity .25s}
+.node rect{stroke-width:2}
+.node.plat rect{fill:var(--surface); stroke:var(--vert)}
+.node.socle rect{fill:var(--mint); stroke:var(--vert); stroke-width:1.5}
+.node.cloison rect{fill:var(--jaune-doux); stroke:var(--jaune); stroke-width:2.5}
+.node.svc rect{fill:var(--surface); stroke:var(--ocean)}
+.node .l1{font-size:15px; font-weight:700; fill:var(--encre)}
+.node .l2{font-size:12px; fill:var(--doux)}
+.node.cloison .l2{fill:var(--jaune-encre); font-weight:600}
+.node:hover rect{stroke-width:3}
+.node.actif rect{stroke-width:3.5}
+.edge{fill:none; stroke-width:2; opacity:.5; transition:opacity .25s, stroke-width .25s}
+.edge.nav{stroke:var(--vert)}
+.edge.data{stroke:var(--ocean); stroke-dasharray:6 5}
+.edge.on{opacity:1; stroke-width:3.2}
+.dim{opacity:.1}
+.node.dim{opacity:.22}
+.mk-nav{fill:var(--vert)} .mk-data{fill:var(--ocean)}
+
+.detail{
+  margin-top:20px; background:var(--surface); border:1.5px solid var(--ligne);
+  border-radius:14px; padding:22px 24px;
+}
+.detail h3{font-size:1.35rem; margin:0 0 6px; letter-spacing:-0.01em}
+.detail .sous{color:var(--doux); margin:0 0 16px; max-width:70ch}
+.detail h4{font-size:.95rem; margin:18px 0 8px}
+.detail ol,.detail ul{margin:0; padding-left:1.3em; max-width:72ch}
+.detail li{margin-bottom:6px}
+.pastille{display:inline-block; font-size:.85rem; font-weight:600; padding:4px 10px; border-radius:999px; background:var(--mint); color:var(--vert-fonce)}
+.pastille.jaune{background:var(--jaune-doux); color:var(--jaune-encre)}
+.pastille.ocean{background:transparent; border:1.5px solid var(--ocean); color:var(--ocean)}
+.colonnes{display:grid; grid-template-columns:1fr 1fr; gap:8px 28px}
+.regles{display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:6px}
+.regle{border-left:3px solid var(--vert); padding:2px 0 2px 14px}
+.regle strong{display:block; margin-bottom:4px}
+.regle p{margin:0; color:var(--doux); font-size:.95rem}
+.astuce{font-size:.9rem; color:var(--doux); margin:14px 0 0}
+footer{margin-top:28px; font-size:.85rem; color:var(--doux); max-width:80ch}
+
+@media (max-width:900px){
+  .layout{grid-template-columns:1fr; gap:16px}
+  nav.profils{position:static}
+  .choix{flex-direction:row; flex-wrap:wrap}
+  .groupe{margin-bottom:12px}
+  .colonnes,.regles{grid-template-columns:1fr}
+  .page{padding:20px 16px 36px}
+}
+@media (prefers-reduced-motion: reduce){.node,.edge{transition:none}}
+</style>
+</head>
+<body>
+<div class="page">
+  <header>
+    <h1>Écosystème numérique ADUG : qui passe par où</h1>
+    <p class="lead">Choisissez un profil pour voir son parcours à travers les plateformes, ce qui est partagé entre la FUG, la DFPU et le PAVE, et ce qui reste propre à chaque service. Vous pouvez aussi cliquer sur un élément du schéma.</p>
+  </header>
+
+  <div class="layout">
+    <nav class="profils" aria-label="Profils">
+      <div class="groupe">
+        <div class="choix"><button type="button" data-profil="ensemble" aria-pressed="true">Vue d'ensemble</button></div>
+      </div>
+      <div class="groupe">
+        <h2>Particuliers et communauté</h2>
+        <div class="choix">
+          <button type="button" data-profil="donateur" aria-pressed="false">Donateur particulier</button>
+          <button type="button" data-profil="alumni" aria-pressed="false">Alumni</button>
+          <button type="button" data-profil="etudiant" aria-pressed="false">Étudiant</button>
+        </div>
+      </div>
+      <div class="groupe">
+        <h2>Entreprises</h2>
+        <div class="choix">
+          <button type="button" data-profil="mecene" aria-pressed="false">Mécène</button>
+          <button type="button" data-profil="sponsor" aria-pressed="false">Sponsor</button>
+          <button type="button" data-profil="recruteur" aria-pressed="false">Entreprise qui recrute</button>
+          <button type="button" data-profil="formation" aria-pressed="false">Entreprise qui forme</button>
+          <button type="button" data-profil="innovation" aria-pressed="false">Entreprise qui innove</button>
+        </div>
+      </div>
+    </nav>
+
+    <main>
+      <ul class="legende" aria-label="Légende">
+        <li><span class="sw plat"></span>Plateforme</li>
+        <li><span class="sw socle"></span>Partagé entre services</li>
+        <li><span class="sw cloison"></span>Propre à la FUG</li>
+        <li><span class="sw svc"></span>Service</li>
+        <li><span class="trait"></span>L'usager passe d'une plateforme à l'autre</li>
+        <li><span class="trait data"></span>Des données circulent</li>
+      </ul>
+      <div class="schema-wrap">
+        <svg id="schema" viewBox="0 0 1100 600" role="img" aria-labelledby="schema-titre">
+          <title id="schema-titre">Schéma des plateformes, du socle commun et des services de l'écosystème ADUG</title>
+          <defs>
+            <marker id="m-nav" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk-nav" d="M0,0 L10,5 L0,10 z"/></marker>
+            <marker id="m-data" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk-data" d="M0,0 L10,5 L0,10 z"/></marker>
+          </defs>
+          <rect class="bande" x="0" y="0" width="1100" height="258"/>
+          <rect class="bande" x="0" y="428" width="1100" height="172"/>
+          <text class="rang" x="16" y="30">Plateformes</text>
+          <text class="rang" x="16" y="296">Socle commun</text>
+          <text class="rang" x="16" y="456">Services</text>
+          <g id="edges"></g>
+          <g id="nodes"></g>
+        </svg>
+      </div>
+      <section class="detail" id="detail" aria-live="polite"></section>
+    </main>
+  </div>
+
+  <footer>Schéma de travail, à valider avec le service web de l'Université. La composition du PAVE (DOSIP et BVE) est à confirmer. Les parcours décrivent la cible, pas l'existant.</footer>
+</div>
+
+<script>
+(function(){
+  var ROW = {
+    A:{y:165,h:66,w:200},
+    B:{y:325,h:60,w:170},
+    C:{y:482,h:64,w:200}
+  };
+  var GAPS = [240,450,660,870];
+
+  var NODES = {
+    ug:{row:'A',x:150,kind:'plat',l1:"Site de l'Université",l2:'Existant',
+      titre:"Site de l'Université",statut:'Existant, géré par le service web',
+      texte:"La vitrine institutionnelle et la source de référence : formations (dont celles de la DFPU), recherche, scolarité, vie étudiante. Il informe ; les trois solutions font agir. Ses pages « Entreprises », « Alumni » et « Soutenir » renvoient vers elles."},
+    fug:{row:'A',x:410,kind:'plat',l1:'Site FUG',l2:'Lot 1',
+      titre:'Site de la Fondation',statut:'À créer (Lot 1)',
+      texte:"Collecte et transparence : catalogue de soutien par profil, pages projets, gouvernance, comptes. C'est le seul endroit où l'on donne en ligne."},
+    portail:{row:'A',x:670,kind:'plat',l1:'Portail Entreprises',l2:'À créer',
+      titre:'Portail Entreprises & Partenaires',statut:'À créer, première version possible sur la page « Entreprises » actuelle',
+      texte:"Le guichet unique des entreprises, organisé par besoin : recruter, former, innover, soutenir. Chaque porte mène au bon service, avec un seul compte et un espace partenaire qui rassemble toute la relation."},
+    hub:{row:'A',x:930,kind:'plat',l1:'Hub Campus',l2:'Lot 2',
+      titre:'Hub Campus',statut:'À créer (Lot 2)',
+      texte:"L'application des étudiants, des Alumni et des recruteurs : profils et CV vidéo, offres, mentorat, vie de campus. Le compte étudiant devient compte Alumni au diplôme."},
+    contenus:{row:'B',x:135,kind:'socle',l1:'Contenus partagés',l2:'Partagé',
+      titre:'Contenus partagés',statut:'Partagé',
+      texte:"Écrits une fois sur le site de l'Université, repris automatiquement ailleurs (catalogue DFPU, actualités, laboratoires). Une mise à jour à la source se répercute partout."},
+    pay:{row:'B',x:345,kind:'cloison',l1:'Don et reçus fiscaux',l2:'Propre à la FUG',
+      titre:'Paiement des dons et reçus fiscaux',statut:'Propre à la FUG',
+      texte:"Paiement en ligne, reçus CERFA 11580 (particuliers) et 16216 (entreprises), circuit comptable. Les autres plateformes y renvoient, jamais l'inverse : la fiscalité du don reste cloisonnée."},
+    crm:{row:'B',x:555,kind:'socle',l1:'CRM partagé',l2:'Partagé',
+      titre:'CRM partagé',statut:'Partagé, avec droits par service',
+      texte:"Une seule fiche par organisation, identifiée par son SIREN. Chaque service y suit ses propres échanges : dons pour la FUG, devis pour la DFPU, offres pour le PAVE, contrats pour la recherche. Tout le monde voit la relation ; seul le service concerné voit ses montants et conventions."},
+    compte:{row:'B',x:765,kind:'socle',l1:'Compte unique',l2:'Partagé',
+      titre:'Compte unique',statut:'Partagé',
+      texte:"Un seul identifiant pour toutes les plateformes. Étudiants et personnels utilisent leurs identifiants de l'Université ; entreprises, Alumni et donateurs passent par un annuaire commun, à définir avec le service informatique."},
+    audience:{row:'B',x:975,kind:'socle',l1:"Mesure d'audience",l2:'Partagé',
+      titre:"Mesure d'audience",statut:'Partagé',
+      texte:"Un seul outil pour les quatre plateformes, respectueux de la vie privée. Il permet de suivre un parcours de bout en bout, par exemple de la page « Entreprises » jusqu'au don."},
+    sFUG:{row:'C',x:240,kind:'svc',l1:'Fondation (FUG)',l2:'Collecte, mécènes',
+      titre:'Fondation (FUG)',statut:'Service',
+      texte:"Relation avec les donateurs, mécènes et sponsors, émission des reçus, suivi des contreparties, rapports d'impact."},
+    sDFPU:{row:'C',x:470,kind:'svc',l1:'DFPU',l2:'Formation, alternance',
+      titre:'DFPU',statut:'Service',
+      texte:"Formation continue, alternance, validation des acquis : catalogue, conseil, devis et conventions avec les entreprises."},
+    sRECH:{row:'C',x:700,kind:'svc',l1:'Recherche',l2:'DIRVED, laboratoires, AIBSI',
+      titre:'Recherche',statut:'Service',
+      texte:"Mise en relation avec les laboratoires, contrats de recherche et de prestation, projets d'innovation."},
+    sPAVE:{row:'C',x:930,kind:'svc',l1:'PAVE',l2:'Stages, emploi, vie étudiante',
+      titre:'PAVE',statut:'Service (DOSIP et BVE, à confirmer)',
+      texte:"Validation des offres et des comptes recruteurs, relation avec les étudiants, mentorat, vie de campus."}
+  };
+
+  var EDGES = [
+    ['ug','fug','nav'],['ug','portail','nav'],['ug','hub','nav'],
+    ['portail','fug','nav'],['portail','hub','nav'],['hub','fug','nav'],['fug','pay','nav'],
+    ['ug','contenus','data'],['contenus','portail','data'],['contenus','hub','data'],
+    ['fug','crm','data'],['portail','crm','data'],['hub','crm','data'],
+    ['fug','compte','data'],['portail','compte','data'],['hub','compte','data'],
+    ['ug','audience','data'],['fug','audience','data'],['portail','audience','data'],['hub','audience','data'],
+    ['pay','sFUG','data'],['crm','sFUG','data'],['crm','sDFPU','data'],['crm','sRECH','data'],['crm','sPAVE','data'],
+    ['hub','sPAVE','data']
+  ];
+
+  var PROFILS = {
+    donateur:{
+      titre:'Donateur particulier',
+      entree:"Le bouton « Soutenir la Fondation » du site de l'Université, le QR code d'un support imprimé, ou le site FUG directement.",
+      nodes:['ug','fug','pay','crm','audience','sFUG'],
+      edges:['ug>fug','fug>pay','pay>sFUG','fug>crm','crm>sFUG','ug>audience','fug>audience'],
+      etapes:[
+        "Arrive sur le site FUG depuis le site de l'Université ou un QR code.",
+        "Choisit une cause : le fonctionnement de la Fondation ou un projet précis.",
+        "Fixe le montant et la fréquence (ponctuel ou mensuel) et voit le coût net après réduction d'impôt.",
+        "Paie en ligne de façon sécurisée.",
+        "Reçoit aussitôt son reçu fiscal par e-mail.",
+        "Reçoit ensuite des nouvelles de l'impact de son don, puis une invitation à renouveler."
+      ],
+      justif:'Reçu fiscal CERFA 11580', justifClasse:'',
+      partage:["Sa fiche rejoint le CRM commun.","Son parcours est suivi par l'outil de mesure d'audience commun."],
+      propre:["Le paiement et le reçu sont gérés par la seule FUG, avec son circuit comptable."]
+    },
+    alumni:{
+      titre:'Alumni',
+      entree:"Son compte étudiant du Hub Campus, passé automatiquement au statut Alumni à la remise du diplôme.",
+      nodes:['hub','compte','fug','pay','crm','sFUG','sPAVE'],
+      edges:['hub>compte','hub>fug','fug>pay','pay>sFUG','hub>crm','crm>sFUG','hub>sPAVE'],
+      etapes:[
+        "Garde son compte après le diplôme, qui passe au statut Alumni.",
+        "Retrouve d'autres diplômés dans l'annuaire et peut devenir mentor.",
+        "Publie, s'il le souhaite, les offres de son entreprise.",
+        "Clique sur « Soutenir » : il arrive sur le site FUG avec le projet déjà présélectionné.",
+        "Donne et reçoit son reçu fiscal."
+      ],
+      justif:'Reçu fiscal CERFA 11580, s\u2019il donne', justifClasse:'',
+      partage:["Le même compte sert sur le Hub et sur le site FUG.","Ses engagements (mentorat, dons) figurent sur une seule fiche."],
+      propre:["Le PAVE gère le mentorat et les offres ; la FUG gère le don."]
+    },
+    etudiant:{
+      titre:'Étudiant',
+      entree:"La page « Étudiants » du site de l'Université, ou l'application installée sur son téléphone.",
+      nodes:['ug','hub','compte','contenus','sPAVE'],
+      edges:['ug>hub','hub>compte','ug>contenus','contenus>hub','hub>sPAVE'],
+      etapes:[
+        "Se connecte avec ses identifiants de l'Université, sans nouveau mot de passe.",
+        "Complète son profil, dépose son CV et enregistre une vidéo de présentation.",
+        "Reçoit les offres de stage, d'alternance et d'emploi de sa filière, et postule en deux actions.",
+        "Demande un mentor parmi les Alumni et les cadres d'entreprises partenaires.",
+        "Consulte les bourses de la FUG et les formations en alternance de la DFPU, reprises du site de l'Université."
+      ],
+      justif:'Service gratuit', justifClasse:'ocean',
+      partage:["Ses identifiants de l'Université.","Les contenus repris du site de l'Université."],
+      propre:["Ses données restent dans le Hub, gérées par le PAVE. Elles ne vont pas dans le CRM des entreprises."]
+    },
+    mecene:{
+      titre:'Mécène',
+      entree:"La page « Entreprises » du site de l'Université puis la porte « Soutenir » du portail, ou un rendez-vous après prospection.",
+      nodes:['ug','portail','fug','pay','compte','crm','hub','sFUG'],
+      edges:['ug>portail','portail>fug','fug>pay','pay>sFUG','portail>compte','portail>crm','crm>sFUG','portail>hub'],
+      etapes:[
+        "Découvre le catalogue : Club des Mécènes, mécénat d'un projet qui peut porter son nom, mécénat en nature ou en compétences.",
+        "Calcule sa réduction d'impôt de 60 % et le coût net de son engagement.",
+        "Pour un petit montant, paie en ligne sur le site FUG en mode entreprise. Pour un grand montant, prend rendez-vous et signe une convention.",
+        "Reçoit son reçu fiscal d'entreprise.",
+        "Accède à son espace partenaire : contreparties, badge VIP sur ses offres du Hub, rapport d'impact."
+      ],
+      justif:'Reçu fiscal CERFA 16216', justifClasse:'',
+      partage:["Un seul compte pour le portail, le site FUG et le Hub.","Une seule fiche entreprise, visible de la FUG, de la DFPU et du PAVE."],
+      propre:["Les montants et les conventions ne sont visibles que de la FUG.","Les contreparties sont suivies pour rester sous 25 % du don."]
+    },
+    sponsor:{
+      titre:'Sponsor',
+      entree:"La porte « Soutenir » du portail, rubrique événements et visibilité.",
+      nodes:['ug','portail','crm','sFUG'],
+      edges:['ug>portail','portail>crm','crm>sFUG'],
+      etapes:[
+        "Consulte les offres de visibilité : Gala, Soirée de lancement, événements.",
+        "Remplit le formulaire de contact dédié.",
+        "Reçoit un devis, puis une facture avec TVA.",
+        "Obtient la visibilité prévue au contrat."
+      ],
+      justif:'Facture avec TVA, jamais de reçu fiscal', justifClasse:'jaune',
+      partage:["Une seule fiche entreprise dans le CRM."],
+      propre:["Le parcours ne passe jamais par le tunnel de don : le parrainage est une prestation commerciale."]
+    },
+    recruteur:{
+      titre:'Entreprise qui recrute',
+      entree:"La porte « Recruter » du portail.",
+      nodes:['ug','portail','compte','hub','crm','sPAVE'],
+      edges:['ug>portail','portail>hub','portail>compte','hub>compte','portail>crm','crm>sPAVE','hub>sPAVE'],
+      etapes:[
+        "Crée son compte entreprise, validé par le PAVE.",
+        "Publie ses offres de stage, d'alternance ou d'emploi sur le Hub, avec le même compte.",
+        "Reçoit les candidatures et échange avec les étudiants.",
+        "Consulte la CVthèque si son accès le permet.",
+        "Indique quand l'offre est pourvue."
+      ],
+      justif:'Service gratuit', justifClasse:'ocean',
+      partage:["Un seul compte pour le portail et le Hub.","Une seule fiche entreprise dans le CRM."],
+      propre:["Le PAVE valide les offres et gère la relation avec les étudiants.","Le badge VIP ne s'affiche que pour les mécènes."]
+    },
+    formation:{
+      titre:'Entreprise qui forme ses salariés',
+      entree:"La porte « Former » du portail.",
+      nodes:['ug','contenus','portail','crm','sDFPU'],
+      edges:['ug>portail','ug>contenus','contenus>portail','portail>crm','crm>sDFPU'],
+      etapes:[
+        "Parcourt le catalogue de la DFPU, affiché dans le portail mais mis à jour sur le site de l'Université.",
+        "Demande un devis ou un parcours sur mesure pour ses salariés.",
+        "Est rappelée par un conseiller de la DFPU.",
+        "Signe une convention de formation, avec un appui sur les financements (OPCO, alternance)."
+      ],
+      justif:'Devis et convention de formation', justifClasse:'ocean',
+      partage:["Le catalogue, écrit une fois sur le site de l'Université.","Une seule fiche entreprise dans le CRM."],
+      propre:["Les devis et conventions ne sont visibles que de la DFPU."]
+    },
+    innovation:{
+      titre:'Entreprise qui innove',
+      entree:"La porte « Innover » du portail.",
+      nodes:['ug','contenus','portail','crm','sRECH'],
+      edges:['ug>portail','ug>contenus','contenus>portail','portail>crm','crm>sRECH'],
+      etapes:[
+        "Consulte les axes de recherche et les laboratoires, repris du site de l'Université.",
+        "Décrit son besoin : étude, projet commun, expertise.",
+        "Est mise en relation avec le bon laboratoire par la direction de la recherche.",
+        "Signe un contrat de recherche ou de prestation."
+      ],
+      justif:'Contrat de recherche ou de prestation', justifClasse:'ocean',
+      partage:["Les contenus sur la recherche, repris du site de l'Université.","Une seule fiche entreprise dans le CRM."],
+      propre:["Les contrats de recherche relèvent de la direction de la recherche, distincts du mécénat."]
+    }
+  };
+
+  var NS = 'http://www.w3.org/2000/svg';
+  var gE = document.getElementById('edges');
+  var gN = document.getElementById('nodes');
+  var detail = document.getElementById('detail');
+
+  function box(id){
+    var n = NODES[id], r = ROW[n.row];
+    return {x:n.x, top:r.y, bottom:r.y + r.h, w:r.w, row:n.row};
+  }
+  function clampX(cx, target, w){
+    var dx = (target - cx) * 0.15, lim = w/2 - 14;
+    if (dx > lim) dx = lim; if (dx < -lim) dx = -lim;
+    return cx + dx;
+  }
+  function pathFor(a, b){
+    var A = box(a), B = box(b);
+    var order = {A:0,B:1,C:2};
+    var ra = order[A.row], rb = order[B.row];
+    if (ra === rb){
+      var sx = A.x + (B.x > A.x ? 30 : -30), ex = B.x + (B.x > A.x ? -30 : 30);
+      var lift = 34 + Math.abs(B.x - A.x) * 0.13;
+      var cy = A.top - lift;
+      return 'M'+sx+' '+A.top+' C'+sx+' '+cy+', '+ex+' '+cy+', '+ex+' '+(B.top-2);
+    }
+    var down = ra < rb;
+    var sy = down ? A.bottom : A.top, ey = down ? B.top - 2 : B.bottom + 2;
+    var sx2 = clampX(A.x, B.x, A.w), ex2 = clampX(B.x, A.x, B.w);
+    if (Math.abs(ra - rb) === 2){
+      var mid = (sx2 + ex2) / 2, gx = GAPS[0];
+      GAPS.forEach(function(g){ if (Math.abs(g - mid) < Math.abs(gx - mid)) gx = g; });
+      var my = (ROW.B.y + ROW.B.h/2);
+      return 'M'+sx2+' '+sy+' C'+sx2+' '+(sy+50)+', '+gx+' '+(ROW.B.y-40)+', '+gx+' '+my+
+             ' S'+ex2+' '+(ey-50)+', '+ex2+' '+ey;
+    }
+    var m = (sy + ey) / 2;
+    return 'M'+sx2+' '+sy+' C'+sx2+' '+m+', '+ex2+' '+m+', '+ex2+' '+ey;
+  }
+
+  var edgeEls = {};
+  EDGES.forEach(function(e){
+    var p = document.createElementNS(NS,'path');
+    p.setAttribute('d', pathFor(e[0], e[1]));
+    p.setAttribute('class', 'edge ' + e[2]);
+    p.setAttribute('marker-end', 'url(#m-' + e[2] + ')');
+    gE.appendChild(p);
+    edgeEls[e[0]+'>'+e[1]] = p;
+  });
+
+  var nodeEls = {};
+  Object.keys(NODES).forEach(function(id){
+    var n = NODES[id], r = ROW[n.row];
+    var g = document.createElementNS(NS,'g');
+    g.setAttribute('class','node '+n.kind);
+    g.setAttribute('tabindex','0');
+    g.setAttribute('role','button');
+    g.setAttribute('aria-label', n.l1 + ', ' + n.l2);
+    var rect = document.createElementNS(NS,'rect');
+    rect.setAttribute('x', n.x - r.w/2); rect.setAttribute('y', r.y);
+    rect.setAttribute('width', r.w); rect.setAttribute('height', r.h);
+    rect.setAttribute('rx', n.kind === 'socle' ? 30 : (n.kind === 'cloison' ? 6 : 12));
+    g.appendChild(rect);
+    var t1 = document.createElementNS(NS,'text');
+    t1.setAttribute('class','l1'); t1.setAttribute('x', n.x); t1.setAttribute('y', r.y + r.h/2 - 3);
+    t1.setAttribute('text-anchor','middle'); t1.textContent = n.l1;
+    var t2 = document.createElementNS(NS,'text');
+    t2.setAttribute('class','l2'); t2.setAttribute('x', n.x); t2.setAttribute('y', r.y + r.h/2 + 16);
+    t2.setAttribute('text-anchor','middle'); t2.textContent = n.l2;
+    g.appendChild(t1); g.appendChild(t2);
+    g.addEventListener('click', function(){ montrerNoeud(id); });
+    g.addEventListener('keydown', function(ev){
+      if (ev.key === 'Enter' || ev.key === ' '){ ev.preventDefault(); montrerNoeud(id); }
+    });
+    gN.appendChild(g);
+    nodeEls[id] = g;
+  });
+
+  function reset(){
+    Object.keys(nodeEls).forEach(function(k){ nodeEls[k].classList.remove('dim','actif'); });
+    Object.keys(edgeEls).forEach(function(k){ edgeEls[k].classList.remove('dim','on'); });
+  }
+  function eclairer(nodes, edges){
+    Object.keys(nodeEls).forEach(function(k){ nodeEls[k].classList.toggle('dim', nodes.indexOf(k) < 0); });
+    Object.keys(edgeEls).forEach(function(k){
+      var on = edges.indexOf(k) >= 0;
+      edgeEls[k].classList.toggle('on', on);
+      edgeEls[k].classList.toggle('dim', !on);
+    });
+  }
+  function presser(id){
+    document.querySelectorAll('[data-profil]').forEach(function(b){
+      b.setAttribute('aria-pressed', b.getAttribute('data-profil') === id ? 'true' : 'false');
+    });
+  }
+  function liste(items, tag){
+    return '<'+tag+'>' + items.map(function(i){ return '<li>'+i+'</li>'; }).join('') + '</'+tag+'>';
+  }
+
+  function vueEnsemble(){
+    presser('ensemble'); reset();
+    detail.innerHTML =
+      '<h3>Trois règles pour mutualiser sans mélanger</h3>' +
+      '<p class="sous">Quatre plateformes, un socle commun, des services qui gardent leurs missions.</p>' +
+      '<div class="regles">' +
+        '<div class="regle"><strong>Le site de l\u2019Université informe</strong><p>Les trois solutions font agir : donner, recruter, se former, être accompagné. Aucune ne recopie ce que dit déjà le site de l\u2019Université.</p></div>' +
+        '<div class="regle"><strong>Le socle est commun</strong><p>Un compte, un CRM, des contenus écrits une fois, une mesure d\u2019audience. Ce qui sert à tous n\u2019est payé et maintenu qu\u2019une fois.</p></div>' +
+        '<div class="regle"><strong>Les missions restent séparées</strong><p>Le don et ses reçus restent à la FUG, les devis à la DFPU, les offres au PAVE. Chaque service ne voit que ses propres montants.</p></div>' +
+      '</div>' +
+      '<p class="astuce">Choisissez un profil à gauche pour suivre son parcours, ou cliquez sur un élément du schéma.</p>';
+  }
+
+  function montrerProfil(id){
+    var p = PROFILS[id];
+    presser(id); reset(); eclairer(p.nodes, p.edges);
+    detail.innerHTML =
+      '<h3>'+p.titre+'</h3>' +
+      '<p class="sous"><strong>Porte d\u2019entrée :</strong> '+p.entree+'</p>' +
+      '<h4>Son parcours</h4>' + liste(p.etapes,'ol') +
+      '<h4>Ce qu\u2019il obtient</h4><span class="pastille '+p.justifClasse+'">'+p.justif+'</span>' +
+      '<div class="colonnes">' +
+        '<div><h4>Ce qui est partagé</h4>'+liste(p.partage,'ul')+'</div>' +
+        '<div><h4>Ce qui reste propre à un service</h4>'+liste(p.propre,'ul')+'</div>' +
+      '</div>';
+  }
+
+  function montrerNoeud(id){
+    var n = NODES[id];
+    var edges = Object.keys(edgeEls).filter(function(k){
+      var parts = k.split('>'); return parts[0] === id || parts[1] === id;
+    });
+    var nodes = [id];
+    edges.forEach(function(k){ k.split('>').forEach(function(x){ if (nodes.indexOf(x) < 0) nodes.push(x); }); });
+    presser(null); reset(); eclairer(nodes, edges);
+    nodeEls[id].classList.add('actif');
+    var cls = n.kind === 'cloison' ? 'jaune' : (n.kind === 'svc' ? 'ocean' : '');
+    var liens = nodes.filter(function(x){ return x !== id; }).map(function(x){ return NODES[x].l1; });
+    detail.innerHTML =
+      '<h3>'+n.titre+'</h3>' +
+      '<p><span class="pastille '+cls+'">'+n.statut+'</span></p>' +
+      '<p class="sous">'+n.texte+'</p>' +
+      (liens.length ? '<h4>Relié à</h4><p class="sous" style="margin:0">'+liens.join(', ')+'</p>' : '');
+  }
+
+  document.querySelectorAll('[data-profil]').forEach(function(b){
+    b.addEventListener('click', function(){
+      var id = b.getAttribute('data-profil');
+      if (id === 'ensemble') vueEnsemble(); else montrerProfil(id);
+    });
+  });
+
+  vueEnsemble();
+})();
+</script>
+</body>
+</html>
