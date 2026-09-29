@@ -349,19 +349,20 @@ footer{margin-top:28px; font-size:.85rem; color:var(--doux); max-width:80ch}
       propre:["Le PAVE valide les offres et gère la relation avec les étudiants.","Le badge VIP ne s'affiche que pour les mécènes."]
     },
     formation:{
-      titre:'Entreprise qui forme ses salariés',
+      titre:'Entreprise qui forme',
       entree:"La porte « Former » du portail.",
-      nodes:['ug','contenus','portail','crm','sDFPU'],
-      edges:['ug>portail','ug>contenus','contenus>portail','portail>crm','crm>sDFPU'],
+      nodes:['ug','contenus','portail','compte','hub','crm','sDFPU','sPAVE'],
+      edges:['ug>portail','ug>contenus','contenus>portail','portail>compte','portail>hub','hub>compte','portail>crm','crm>sDFPU','crm>sPAVE','hub>sPAVE'],
       etapes:[
-        "Parcourt le catalogue de la DFPU, affiché dans le portail mais mis à jour sur le site de l'Université.",
-        "Demande un devis ou un parcours sur mesure pour ses salariés.",
-        "Est rappelée par un conseiller de la DFPU.",
-        "Signe une convention de formation, avec un appui sur les financements (OPCO, alternance)."
+        "Parcourt l'offre de la DFPU, affichée dans le portail mais mise à jour sur le site de l'Université : formations courtes, diplômes d'université, VAE, alternance.",
+        "Demande un devis ou un parcours sur mesure pour ses salariés, ou engage une démarche de VAE.",
+        "Pour accueillir un alternant ou un stagiaire, publie son offre sur le Hub avec le même compte et reçoit les candidatures.",
+        "Est accompagnée par la DFPU pour la convention de formation ou le contrat d'apprentissage, et pour le financement (OPCO).",
+        "Repère dans le Hub les profils qu'elle pourra recruter à plus long terme."
       ],
-      justif:'Devis et convention de formation', justifClasse:'ocean',
-      partage:["Le catalogue, écrit une fois sur le site de l'Université.","Une seule fiche entreprise dans le CRM."],
-      propre:["Les devis et conventions ne sont visibles que de la DFPU."]
+      justif:"Devis, convention de formation ou contrat d'apprentissage", justifClasse:'ocean',
+      partage:["Un seul compte pour le portail et le Hub.","Une seule fiche entreprise, qui montre à la fois la formation et le recrutement.","Le catalogue, écrit une fois sur le site de l'Université."],
+      propre:["Les devis, conventions et contrats restent à la DFPU.","Les offres de stage et la relation avec les étudiants restent au PAVE."]
     },
     innovation:{
       titre:'Entreprise qui innove',
